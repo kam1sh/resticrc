@@ -1,0 +1,22 @@
+[[repos]]
+name = "host"
+path = "/backups/restic"
+default = true
+
+[[repos]]
+name = "home"
+path = "/backups/home"
+
+
+[[job]]
+tag = "gitea"
+paths = "/var/lib/gitea /home/git"
+
+[[job]]
+tag = "etc"
+paths = "/etc"
+
+[[job]]
+name = "postgresql"
+cmd = "sudo -u postgres pg_dumpall"
+

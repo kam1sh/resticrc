@@ -1,0 +1,55 @@
+repos: 
+  host:
+    path: /backups/restic
+    default: true
+
+jobs:
+  gitea:
+    path: 
+      - /var/lib/gitea
+      - /home/git
+  etc:
+    path: /etc
+  data:
+    path: /alive/protected
+    skip: vms
+  postgresql:
+    cmd: sudo -u postgres pg_dumpall
+  home:
+    path: /home
+    skip:
+      - larger: 500M
+        caches: yes
+        venv: yes
+      - igor/Data/Media
+  juno-home:
+    tag: home
+    repo: juno
+    ssh: 192.168.100.254
+    shell: "sudo zypper se -i | cut --delimiter '|' --fields 2 > packages.txt"
+    path: /home/igor
+    exclude:
+      caches: yes # .cache
+      # .config/Code/{Cache,GPUCache,CachedData}
+      dev-caches: yes # includes .pyenv, venv, nodejs, maven, golang, rust, qt and .PyCharm*
+      # venv: yes # venv .venv
+      # nodejs: yes # node_modules .npm/_cacache
+      # maven: yes # .m2
+      # golang: yes # go
+      # rust: yes # .rustup .cargo
+      trash: yes # .local/share/Trash
+      steam: yes # .local/share/Steam
+      telegram: yes # .local/share/TelegramDesktop Downloads/Telegram Desktop
+      paths:
+      - Documents/OneDrive
+      - Music
+      - share
+      - .minecraft
+      - .vscode/extensions
+      - .config/Code/User/workspaceStorage
+      - .local/Qt
+      - .local/lib
+      - .local/share/kite
+      - .phoronix-test-suite
+      - .PlayOnLinux
+
