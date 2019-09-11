@@ -25,7 +25,7 @@ class PipedRunner:
         return out
 
     def __call__(self, args):
-        args = args[0] + self.get_options() + args[1:]
+        args = args[:2] + self.get_options() + args[2:]
         restic_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
         subprocess.check_call(self.target.split(), stdout=restic_proc.stdin)
         restic_proc.stdin.close()
@@ -42,7 +42,7 @@ class Repository:
 class Job:
     repo: Repository = attrib()
     tag: Optional[str] = attrib()
-    exclude: Optional[dict] = attrib(default=None)
+    exclude: Optional[dict] = attrib(factory=dict)
     runner = attrib(default=None)
 
     def run(self, executable="restic", params=None):

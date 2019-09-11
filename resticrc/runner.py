@@ -6,7 +6,7 @@ from .filtering.api import process_filters
 
 
 def get_args(job: Job, executable="restic") -> List[str]:
-    command = [executable]
+    command = [executable, "backup"]
     # repo
     command.extend(["--repo", job.repo.path])
     if job.repo.password_file:
@@ -17,6 +17,3 @@ def get_args(job: Job, executable="restic") -> List[str]:
     command.extend(exclusions)
     return command
 
-
-def run(job):
-    pass

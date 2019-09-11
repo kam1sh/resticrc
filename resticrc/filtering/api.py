@@ -45,6 +45,8 @@ class IgnoreConfig(dict):
                 item.action(key, self, keep, result)
                 continue
             result.extend(item)
+        val = self.get("paths")
+        result.extend(val or [])
         # 2. filtering what should be kept
         for item in keep:
             # we can't do partial exclude right now, only full match
