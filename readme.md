@@ -1,6 +1,6 @@
 # Overview
 Resticrc is a configuration interface to a restic backup tool.
-Basically, it converts YAML file to a restic command line arguments,
+Basically it converts YAML file to a restic command line arguments,
 but resticrc does it really well and in some cases it can completely replace shell scripts.
 
 Just look at the example configuration:
@@ -12,8 +12,8 @@ repos:
 
 global:
   ignore:
-    log: true # *.log
-    caches: true # .cache, *Cache*, *cache*
+    logs: true # *.log
+    caches: true # .cache
 
 jobs:
   gitea:
@@ -22,19 +22,21 @@ jobs:
       - /home/git
   etc: /etc
   data:
-    path: /alive/protected
+    path: /data
     ignore: vms
   postgresql:
     repo: db
     cmd: sudo -u postgres pg_dumpall
+    save-as: postgres_dumpall
   home:
     path: /home
     ignore:
-      dev-caches: true # includes python, npm, java, golang, rust, qt and .PyCharm*
+      dev-caches: true # includes python, npm, java, golang, rust, qt, and more
       # python: true # .pyenv, __pycache__, venv, .venv, .virtualenvs
       # npm: true # node_modules .npm/_cacache
       # java: true # .m2
       # golang: true # ~/go
+      # note: golang exclusion will apply only on user who executes resticrc!
       # rust: true # .rustup .cargo
       # qt: true # .local/Qt
       trash: true # .local/share/Trash
@@ -43,6 +45,12 @@ jobs:
         - ~/share
     keep:
       paths: .virtualenvs
+
+after:
+  forget:
+    keep_daily: 14
+    prune: true
+  cmd: "rclone sync /backups/ yandex: backups"
 ```
 It's beautiful, isn't it?
 
@@ -54,7 +62,6 @@ from resticrc.models import Repository, Job, Action
 from resticrc import main
 
 repo = Repository(name="host", path="/backups/host")
-db = Repository("db", path="/backups/db")
 
 jobs = [
     Job(
@@ -62,6 +69,6 @@ jobs = [
     )
 ]
 
-main(repos=[repo, db], jobs=jobs)
+main(repos=[repo], jobs=jobs)
 
 ```

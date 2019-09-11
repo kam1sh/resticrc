@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 
 
 def _parse_path(path: str):
+    if not isinstance(path, str):
+        return path
     if path.startswith("~/"):
         path = str(Path.home().joinpath(path[2:]).absolute())
     return path
@@ -45,10 +47,21 @@ class IgnoreConfig(dict):
             result.extend(item)
         # 2. filtering what should be kept
         for item in keep:
+            # we can't do partial exclude right now, only full match
             if item in result:
-                # TODO check strings contents?
                 result.remove(item)
         return map(_parse_path, result)
+
+    def as_args(self):
+        out = []
+        for item in self.get_result():
+            option = "--exclude"
+            if isinstance(item, IgnoreCase):
+                option = "--iexclude"
+                item = item.value
+            out.append(option)
+            out.append(item)
+        return out
 
     def render(self):
         return "\n".join(self.get_result())
@@ -118,5 +131,3 @@ def process_filters(config: dict):
     config = IgnoreConfig(config)
     manager.hook.exclude_hook(config=config)
     return config
-
-

@@ -1,2 +1,1 @@
-def main(repos, jobs, default_repo=None):
-    pass
+__version__ = "0.1.0"
