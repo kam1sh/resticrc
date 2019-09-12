@@ -11,6 +11,7 @@ repos:
   db: /backups/db
 
 global:
+  repo: host
   ignore:
     logs: true # *.log
     caches: true # .cache
@@ -45,12 +46,6 @@ jobs:
         - ~/share
     keep:
       paths: .virtualenvs
-
-after:
-  forget:
-    keep_daily: 14
-    prune: true
-  cmd: "rclone sync /backups/ yandex: backups"
 ```
 It's beautiful, isn't it?
 
@@ -58,17 +53,15 @@ No?
 
 Then look at the Python syntax!
 ```python
-from resticrc.models import Repository, Job, Action
-from resticrc import main
+from resticrc.models import Repository, Job, BackupRunner
 
 repo = Repository(name="host", path="/backups/host")
 
-jobs = [
-    Job(
-        repo=repo, tag="gitea", action=Action(backup=["/var/lib/gitea", "/home/git"])
-    )
-]
-
-main(repos=[repo], jobs=jobs)
-
+job = Job(
+    repo=repo,
+    tag="gitea",
+    runner=BackupRunner(paths=["/home/git", "/var/lib/gitea"]),
+    exclude={"logs": True}
+)
+job.run()
 ```
