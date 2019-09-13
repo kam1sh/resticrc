@@ -1,5 +1,7 @@
-from resticrc.models import Job, Repository, BackupRunner, PipedRunner
 import subprocess
+
+import click.testing
+from resticrc.models import Job, Repository, BackupRunner, PipedRunner
 
 
 def test_simple_job(mocker):
@@ -30,3 +32,16 @@ def test_job_cmd(mocker):
         ("restic backup --stdin --stdin-filename pgdump.bin --repo /backups/host --tag postgres").split(),
         stdin=subprocess.PIPE
     )
+
+def test_dry_run(mocker, capsys):
+    mocker.patch.object(subprocess, "Popen")
+    mocker.patch.object(subprocess, "check_call")
+    job = Job(
+        repo=Repository("host", path="/backups/host"),
+        tag="home",
+        runner=BackupRunner(paths=["/home"]),
+        exclude={"logs": True, "paths": ["/home/user/share"]},
+    )
+    job.run(dry_run=True)
+    assert not subprocess.check_call.called
+    assert capsys.readouterr()

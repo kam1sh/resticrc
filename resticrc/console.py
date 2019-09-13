@@ -8,13 +8,15 @@ from .parser import Parser
 
 levels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
+pass_parser = click.make_pass_decorator(Parser)
 
-@click.command()
+
+@click.group()
 @click.version_option(__version__, prog_name="resticrc")
 @click.option("-v", "--verbose", count=True)
 @click.option("-c", "--config")
-@click.argument("jobname")
-def cli(verbose, config, jobname):
+@click.pass_context
+def cli(ctx, verbose, config):
     level = levels[min(verbose, 2)]
     logging.basicConfig(level=level)
     logging.getLogger("resticrc").setLevel(level)
@@ -23,6 +25,13 @@ def cli(verbose, config, jobname):
         config = confpath / "resticrc"
         if not config.exists():
             config = confpath / "resticrc.yml"
-    parser = Parser(config)
+    ctx.obj = Parser(config)
+
+
+@cli.command()
+@click.option("-n", "--dry-run", is_flag=True, help="Prints restic command instead of running it")
+@click.argument("jobname")
+@pass_parser
+def run(parser, jobname, dry_run):
     job = parser.jobs[jobname]
-    job.run()
+    job.run(dry_run=dry_run)

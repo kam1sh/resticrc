@@ -37,6 +37,7 @@ def test_ignore_override_defaults():
     assert result.render() == (
         ".pyenv\n__pycache__\n.venv\n.virtualenvs\n"
         "node_modules\n.npm/_cacache\n.m2\n.rustup\n.cargo\n.local/Qt\n"
+        ".PyCharm*\n.vscode/extensions\n"
         ".config/Code/User/workspaceStorage\n.config/Code/Cache\n"
         ".config/Code/GPUCache\n.config/Code/CachedData"
     )
@@ -49,6 +50,6 @@ def test_as_args():
         result.as_args()
         == (
             "--exclude .m2 --exclude .cache"
-            " --exclude .config/*/Cache --exclude .config/*/GPUCache"
+            " --exclude .config/*/Cache --exclude .config/*/GPUCache --exclude .config/*/CachedData"
         ).split()
     )

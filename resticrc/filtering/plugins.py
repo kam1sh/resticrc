@@ -13,7 +13,7 @@ manager.register(Logs())
 class Caches:
     @hookimpl
     def exclude_hook(self, config):
-        config.map("caches", ".cache", ".config/*/Cache", ".config/*/GPUCache")
+        config.map("caches", ".cache", ".config/*/Cache", ".config/*/GPUCache", ".config/*/CachedData")
 
 
 manager.register(Caches())
@@ -30,8 +30,10 @@ class DevCaches:
         func("golang", "/home/*/go")
         func("rust", ".rustup", ".cargo")
         func("qt", ".local/Qt")
+        func("pycharm", ".PyCharm*")
         func(
             "vscode",
+            ".vscode/extensions",
             ".config/Code/User/workspaceStorage",
             ".config/Code/Cache",
             ".config/Code/GPUCache",

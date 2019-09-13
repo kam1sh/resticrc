@@ -8,8 +8,11 @@ from attr import attrs, attrib
 class BackupRunner:
     paths: List[str] = attrib()
 
-    def __call__(self, args: List[str]):
+    def __call__(self, args: List[str], dry_run=False):
         args.extend(self.paths)
+        if dry_run:
+            print(" ".join(args))
+            return
         subprocess.check_call(args)
 
 
@@ -24,8 +27,11 @@ class PipedRunner:
             out.extend(["--stdin-filename", self.filename])
         return out
 
-    def __call__(self, args):
+    def __call__(self, args: List[str], dry_run=False):
         args = args[:2] + self.get_options() + args[2:]
+        if dry_run:
+            print(" ".join(args))
+            return
         restic_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
         subprocess.check_call(self.target.split(), stdout=restic_proc.stdin)
         restic_proc.stdin.close()
@@ -45,8 +51,8 @@ class Job:
     exclude: Optional[dict] = attrib(factory=dict)
     runner = attrib(default=None)
 
-    def run(self, executable="restic", params=None):
+    def run(self, executable="restic", dry_run=False):
         from .runner import get_args
 
         args = get_args(self, executable=executable)
-        self.runner(args)
+        self.runner(args, dry_run=dry_run)
