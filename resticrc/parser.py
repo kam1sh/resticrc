@@ -8,7 +8,7 @@ except ImportError:
     from yaml import Loader
 import yaml
 
-from .models import Repository, Job, BackupRunner, PipedRunner
+from .models import Repository, Job, FileRunner, PipedRunner
 
 
 log = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class Parser:
         for name, repo in value.items():
             if isinstance(repo, str):
                 repo = {"path": repo}
-            passwd = repo.get("password_file")
+            passwd = repo.get("password-file") or repo.get("password_file")
             out[name] = Repository(name=name, path=repo["path"], password_file=passwd)
         return out
 
@@ -64,22 +64,36 @@ class Parser:
 
     def parse_job(self, name, conf):
         log.debug("Processing job %s", name)
-        if isinstance(conf, str):
-            conf = dict(paths=[conf])
-        elif isinstance(conf, list):
-            conf = {"paths": conf}
+        conf = self.parse_paths(conf)
         for k, v in self.global_settings.items():
             if k == "exclude":
-                exclude = conf.get("exclude", {})
-                self.merge_exclusions(exclude)
-                conf["exclude"] = exclude
+                conf[k] = self.parse_exclude(conf.get("exclude", {}))
             else:
                 conf.setdefault(k, v)
-        # action = Action(backup=paths, command=conf.pop("cmd", None))
         repo_name = conf["repo"]
         conf["repo"] = self.repos[repo_name]
         runner = get_runner(conf)
         return Job(tag=conf.get("tag", name), runner=runner, **conf)
+
+    def parse_paths(self, conf) -> dict:
+        """ Parses paths section of job, returns config. """
+        if isinstance(conf, str):
+            conf = dict(paths=[conf])
+        elif isinstance(conf, list):
+            conf = {"paths": conf}
+        paths = conf.pop("path", None)
+        if isinstance(paths, str):
+            paths = [paths]
+        conf.setdefault("paths", paths)
+        return conf
+
+    def parse_exclude(self, exclude):
+        if isinstance(exclude, str):
+            exclude = {"paths": [exclude]}
+        elif isinstance(exclude, list):
+            exclude = {"paths": exclude}
+        self.merge_exclusions(exclude)
+        return exclude
 
     def merge_exclusions(self, jobexclude: dict):
         """ Merges global and job dictionaries. """
@@ -98,7 +112,7 @@ def get_runner(conf: dict):
     run_cmd = conf.pop("cmd", None)
     if run_cmd:
         return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
-    return BackupRunner(paths)
+    return FileRunner(paths)
 
 
 def getlist(value) -> list:

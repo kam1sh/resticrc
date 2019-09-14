@@ -35,3 +35,10 @@ def cli(ctx, verbose, config):
 def run(parser, jobname, dry_run):
     job = parser.jobs[jobname]
     job.run(dry_run=dry_run)
+
+
+@cli.command()
+@pass_parser
+def run_all(parser):
+    for job in parser.jobs.values():
+        job.run()

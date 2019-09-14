@@ -31,7 +31,7 @@ jobs:
     save-as: postgres_dumpall
   home:
     path: /home
-    ignore:
+    exclude:
       dev-caches: true # includes python, npm, java, golang, rust, qt, and more
       # python: true # .pyenv, __pycache__, venv, .venv, .virtualenvs
       # npm: true # node_modules .npm/_cacache
@@ -44,8 +44,6 @@ jobs:
       telegram: true # .local/share/TelegramDesktop
       paths:
         - ~/share
-    keep:
-      paths: .virtualenvs
 ```
 It's beautiful, isn't it?
 
@@ -53,14 +51,14 @@ No?
 
 Then look at the Python syntax!
 ```python
-from resticrc.models import Repository, Job, BackupRunner
+from resticrc.models import Repository, Job, FileRunner
 
 repo = Repository(name="host", path="/backups/host")
 
 job = Job(
     repo=repo,
     tag="gitea",
-    runner=BackupRunner(paths=["/home/git", "/var/lib/gitea"]),
+    runner=FileRunner(paths=["/home/git", "/var/lib/gitea"]),
     exclude={"logs": True}
 )
 job.run()

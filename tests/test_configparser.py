@@ -1,4 +1,4 @@
-from resticrc.models import Repository, Job, BackupRunner, PipedRunner
+from resticrc.models import Repository, Job, FileRunner, PipedRunner
 from resticrc.parser import Parser
 
 
@@ -74,11 +74,26 @@ def test_parser_full():
     assert parser.jobs["gitlab"] == Job(
         tag="gitlab",
         repo=repo,
-        runner=BackupRunner(["/var/lib/gitlab", "/home/git"]),
+        runner=FileRunner(["/var/lib/gitlab", "/home/git"]),
         exclude=exclude,
     )
     assert parser.jobs["etc"] == Job(
-        tag="etc", repo=repo, runner=BackupRunner(["/etc"]), exclude=exclude
+        tag="etc", repo=repo, runner=FileRunner(["/etc"]), exclude=exclude
     )
     assert parser.jobs["postgresql"].runner == PipedRunner(target="pg_dumpall")
     assert parser.jobs["home"].exclude == dict(**exclude, logs=True)
+    assert parser.jobs["home"].runner.paths == ["/home"]
+
+
+def test_exclude_str():
+    conf = "/home/*/.local/lib"
+    parser = LazyParser({})
+    result = parser.parse_exclude(conf)
+    assert result["paths"] == [conf]
+
+def test_exclude_list():
+    conf = ["/home/*/.local/lib"]
+    parser = LazyParser({})
+    result = parser.parse_exclude(conf)
+    assert result["paths"] == conf
+

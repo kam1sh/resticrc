@@ -5,7 +5,7 @@ from attr import attrs, attrib
 
 
 @attrs
-class BackupRunner:
+class FileRunner:
     paths: List[str] = attrib()
 
     def __call__(self, args: List[str], dry_run=False):
@@ -35,6 +35,7 @@ class PipedRunner:
         restic_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
         subprocess.check_call(self.target.split(), stdout=restic_proc.stdin)
         restic_proc.stdin.close()
+        restic_proc.wait(timeout=5)
 
 
 @attrs

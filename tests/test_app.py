@@ -1,7 +1,7 @@
 import subprocess
 
 import click.testing
-from resticrc.models import Job, Repository, BackupRunner, PipedRunner
+from resticrc.models import Job, Repository, FileRunner, PipedRunner
 
 
 def test_simple_job(mocker):
@@ -9,7 +9,7 @@ def test_simple_job(mocker):
     job = Job(
         repo=Repository("host", path="/backups/host"),
         tag="home",
-        runner=BackupRunner(paths=["/home"]),
+        runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
     job.run()
@@ -39,7 +39,7 @@ def test_dry_run(mocker, capsys):
     job = Job(
         repo=Repository("host", path="/backups/host"),
         tag="home",
-        runner=BackupRunner(paths=["/home"]),
+        runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
     job.run(dry_run=True)

@@ -1,7 +1,7 @@
 from typing import List
 import subprocess
 
-from .models import Job, BackupRunner, PipedRunner
+from .models import Job, FileRunner, PipedRunner
 from .filtering.api import process_filters
 
 
