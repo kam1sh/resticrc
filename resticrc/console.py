@@ -39,6 +39,7 @@ def run(parser, jobname, dry_run):
 
 @cli.command()
 @pass_parser
-def run_all(parser):
+def all(parser):
+    """Execute all jobs"""
     for job in parser.jobs.values():
         job.run()
