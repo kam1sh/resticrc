@@ -29,13 +29,14 @@ def cli(ctx, verbose, config):
 
 
 @cli.command()
-@click.option("-n", "--dry-run", is_flag=True, help="Prints restic command instead of running it")
+@click.option(
+    "-n", "--dry-run", is_flag=True, help="Prints restic command instead of running it"
+)
 @click.argument("jobname")
 @pass_parser
 def run(parser, jobname, dry_run):
     job = parser.jobs[jobname]
-    job.run(dry_run=dry_run)
-    parser.cleanup()
+    job.run(dry_run=dry_run, conf=parser.conf)
 
 
 @cli.command()
@@ -43,5 +44,5 @@ def run(parser, jobname, dry_run):
 def all(parser):
     """Execute all jobs"""
     for job in parser.jobs.values():
-        job.run()
+        job.run(conf=parser.conf, cleanup=False)
     parser.cleanup()

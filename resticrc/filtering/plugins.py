@@ -13,7 +13,13 @@ manager.register(Logs())
 class Caches:
     @hookimpl
     def exclude_hook(self, config):
-        config.map("caches", ".cache", ".config/*/Cache", ".config/*/GPUCache", ".config/*/CachedData")
+        config.map(
+            "caches",
+            ".cache",
+            ".config/*/Cache",
+            ".config/*/GPUCache",
+            ".config/*/CachedData",
+        )
 
 
 manager.register(Caches())

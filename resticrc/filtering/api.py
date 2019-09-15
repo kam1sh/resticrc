@@ -19,10 +19,12 @@ def _parse_path(path: str):
     return path
 
 
-class IgnoreConfig(dict):
+class ExclusionSettings(dict):
     def __init__(self, items):
         super().__init__(items)
         self.pluginmap: ty.Dict[str, ty.Union[ty.Tuple[str]], Holder] = {}
+        self.exclude = set()
+        self.iexclude = set()
 
     def map(self, name, *paths):
         val = self.get(name)
@@ -36,7 +38,14 @@ class IgnoreConfig(dict):
     def mapdefault(self, k, *defaults):
         return self.pluginmap.setdefault(k, Default(defaults))
 
-    def get_result(self) -> ty.Iterator[str]:
+    def add_results(self):
+        for item in self.get_result():
+            if isinstance(item, IgnoreCase):
+                self.iexclude.add(item.value)
+            else:
+                self.exclude.add(item)
+
+    def get_result(self) -> ty.Iterator[ty.Union[str, "IgnoreCase"]]:
         result = []
         keep: ty.List[str] = []
         # 1. populate paths
@@ -46,6 +55,8 @@ class IgnoreConfig(dict):
                 continue
             result.extend(item)
         val = self.get("paths")
+        if isinstance(val, str):
+            raise ValueError("'paths' is a string instead of list")
         result.extend(val or [])
         # 2. filtering what should be kept
         for item in keep:
@@ -56,13 +67,10 @@ class IgnoreConfig(dict):
 
     def as_args(self):
         out = []
-        for item in self.get_result():
-            option = "--exclude"
-            if isinstance(item, IgnoreCase):
-                option = "--iexclude"
-                item = item.value
-            out.append(option)
-            out.append(item)
+        for item in self.exclude:
+            out.extend(["--exclude", item])
+        for item in self.iexclude:
+            out.extend(["--iexclude", item])
         return out
 
     def render(self):
@@ -105,13 +113,15 @@ class Default(Holder):
 
 
 class IgnoreCase(Holder):
+    """Holder that indicates that value should be excluded with --iexclude arg."""
+
     def action(self, name, config, keep, result):
         result.append(self)
 
 
 class PluginSpecification:
     @hookspec
-    def exclude_hook(self, config: IgnoreConfig):
+    def exclude_hook(self, config: ExclusionSettings):
         """
         Hook for customising files exclusion.
         :argument config: IgnoreConfig object.
@@ -130,6 +140,6 @@ manager.add_hookspecs(PluginSpecification)
 
 def process_filters(config: dict):
     """ Returns what paths should be excluded """
-    config = IgnoreConfig(config)
+    config = ExclusionSettings(config)
     manager.hook.exclude_hook(config=config)
     return config

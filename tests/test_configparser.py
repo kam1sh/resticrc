@@ -18,7 +18,7 @@ def test_repos_parser():
 
 def test_repo_password_file():
     conf = dict(
-        repos=dict(host={"path": "/backups/host", "password_file": "/etc/test"})
+        repos=dict(host={"path": "/backups/host", "password-file": "/etc/test"})
     )
     parser = LazyParser(conf)
     repos = parser.parse_repos()
@@ -91,9 +91,9 @@ def test_exclude_str():
     result = parser.parse_exclude(conf)
     assert result["paths"] == [conf]
 
+
 def test_exclude_list():
     conf = ["/home/*/.local/lib"]
     parser = LazyParser({})
     result = parser.parse_exclude(conf)
     assert result["paths"] == conf
-

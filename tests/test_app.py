@@ -1,7 +1,8 @@
+import glob
 import subprocess
 
-import click.testing
 from resticrc.models import Job, Repository, FileRunner, PipedRunner
+from resticrc.runner import Restic
 
 
 def test_simple_job(mocker):
@@ -12,11 +13,36 @@ def test_simple_job(mocker):
         runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
+    mocker.patch.object(glob, "glob")
+    glob.glob.return_value = ["/home"]
     job.run()
-    subprocess.check_call.assert_called_with(
-        ("restic backup --repo /backups/host --tag home --exclude *.log"
-         " --exclude /home/user/share /home").split()
+    cmd_args = subprocess.check_call.call_args[0][0]
+    command = " ".join(cmd_args)
+    assert len(cmd_args) == 11
+    assert "restic backup --repo /backups/host --tag home" in command
+    assert "--exclude *.log" in command
+    assert "--exclude /home/user/share" in command
+    assert command.endswith("/home")
+
+
+def test_runner_glob_exclude(mocker):
+    mocker.patch.object(subprocess, "check_call")
+    mocker.patch.object(
+        glob, "glob", return_value=["/home/user1/.config", "/home/user2/.config"]
     )
+    job = Job(
+        repo=Repository("test", "/backups/test"),
+        tag="testtag",
+        runner=FileRunner(paths=["/home/*/.config"]),
+        exclude={"paths": ["/home/user2/.config"]},
+    )
+    run = job.run()
+    glob.glob.assert_called_with("/home/*/.config")
+    args = subprocess.check_call.call_args[0][0]
+    assert len(args) == 9
+    command = " ".join(args)
+    assert "--exclude /home/user2/.config" in command
+    assert command.endswith("/home/user1/.config")
 
 
 def test_job_cmd(mocker):
@@ -25,13 +51,16 @@ def test_job_cmd(mocker):
     job = Job(
         repo=Repository("host", path="/backups/host"),
         tag="postgres",
-        runner=PipedRunner(target="pg_dumpall", filename="pgdump.bin")
+        runner=PipedRunner(target="pg_dumpall", filename="pgdump.bin"),
     )
     job.run()
     subprocess.Popen.assert_called_with(
-        ("restic backup --stdin --stdin-filename pgdump.bin --repo /backups/host --tag postgres").split(),
-        stdin=subprocess.PIPE
+        (
+            "restic backup --stdin --stdin-filename pgdump.bin --repo /backups/host --tag postgres"
+        ).split(),
+        stdin=subprocess.PIPE,
     )
+
 
 def test_dry_run(mocker, capsys):
     mocker.patch.object(subprocess, "Popen")

@@ -46,10 +46,12 @@ def test_ignore_override_defaults():
 def test_as_args():
     config = {"caches": True, "java": True}
     result = process_filters(config)
-    assert (
-        result.as_args()
-        == (
-            "--exclude .m2 --exclude .cache"
-            " --exclude .config/*/Cache --exclude .config/*/GPUCache --exclude .config/*/CachedData"
-        ).split()
-    )
+    result.add_results()
+    args = result.as_args()
+    assert len(args) == 10
+    args = " ".join(args)
+    assert "--exclude .m2" in args
+    assert "--exclude .cache" in args
+    assert "--exclude .config/*/Cache"
+    assert "--exclude .config/*/GPUCache"
+    assert "--exclude .config/*/CachedData"
