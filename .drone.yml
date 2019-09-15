@@ -1,0 +1,15 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+clone:
+  skip_verify: true
+
+steps:
+- name: build
+  image: python:3.6-alpine
+  commands:
+  - pip3 install . --target app
+  - python3 -m zipapp -p "/usr/bin/env python3" -m "resticrc.console:cli" app/
+

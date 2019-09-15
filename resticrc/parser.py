@@ -9,6 +9,7 @@ except ImportError:
 import yaml
 
 from .models import Repository, Job, FileRunner, PipedRunner
+from .runner import cleanup
 
 
 log = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class Parser:
         for name, repo in value.items():
             if isinstance(repo, str):
                 repo = {"path": repo}
-            passwd = repo.get("password-file") or repo.get("password_file")
+            passwd = repo.get("password-file")
             out[name] = Repository(name=name, path=repo["path"], password_file=passwd)
         return out
 
@@ -102,6 +103,11 @@ class Parser:
                 val = jobexclude.get(key, []) + val
             jobexclude.setdefault(key, val)
 
+    def cleanup(self):
+        cleanup(
+            keep_daily=self.conf.get("keep-daily"),
+            prune=self.conf.get("prune-after")
+        )
 
 def get_runner(conf: dict):
     paths = conf.pop("paths", None) or conf.pop("path", None)

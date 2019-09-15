@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 import subprocess
 
-from .models import Job, FileRunner, PipedRunner
+from .models import Job
 from .filtering.api import process_filters
 
 
@@ -17,3 +17,9 @@ def get_args(job: Job, executable="restic") -> List[str]:
     command.extend(exclusions)
     return command
 
+def cleanup(keep_daily: Optional[int], prune: bool):
+    command = ["restic"]
+    if keep_daily:
+        subprocess.check_call(f"restic forget --keep-daily {keep_daily}".split())
+    if prune:
+        subprocess.check_call(f"restic prune".split())
