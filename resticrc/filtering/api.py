@@ -140,6 +140,7 @@ manager.add_hookspecs(PluginSpecification)
 
 def process_filters(config: dict):
     """ Returns what paths should be excluded """
+    # note: should be called after including global settings
     config = ExclusionSettings(config)
     manager.hook.exclude_hook(config=config)
     return config

@@ -1,57 +1,66 @@
+import glob
 import logging
 import subprocess
 from typing import List, Optional
 
 from attr import attrs, attrib
 
-from .filtering.api import process_filters
+
+log = logging.getLogger(__name__)
 
 
-@attrs
-class Restic:
-    repo = attrib()
-    exclude: dict = attrib()
-    tags: List[str] = attrib()
-    executable: str = attrib(default="restic")
-    conf: dict = attrib(default=None)
-    excludeobj = attrib(default=None)
+def backup_files(paths: list, job, args, dry_run=False):
+    # expand globs before passing them to restic
+    if not paths:
+        raise ValueError("No paths provided.")
+    raw_paths = paths
+    paths = []
+    for item in raw_paths:
+        result = glob.glob(item)
+        if not result:
+            log.warning("Failed to unglob %s - possible permission denied?", item)
+            result = [item]
+        paths.extend(result)
+    paths = set(paths)
+    if not paths:
+        raise ValueError("No paths left after glob expanding.")
+    log.debug("Paths before exclude %s", paths)
+    _exclude_paths(job, paths)
+    log.debug("After exclude: %s", paths)
+    if not paths:
+        raise ValueError("No paths left after exclude.")
+    args.extend(paths)
+    if dry_run:
+        print(" ".join(args))
+    else:
+        subprocess.check_call(args)
 
-    @classmethod
-    def fromjob(cls, job, conf=None):
-        return cls(repo=job.repo, exclude=job.exclude, tags=[job.tag], conf=conf)
+def _exclude_paths(job, paths: set):
+    for path in paths.copy():
+        for item in job.exclude.exclude:
+            if path.startswith(item):
+                paths.remove(path)
+        for item in job.exclude.iexclude:
+            if path.lower().startswith(item.lower()):
+                paths.remove(path)
 
-    def get_args(self):
-        command = [self.executable, "backup"]
-        command.extend(["--repo", self.repo.path])
-        if self.repo.password_file:
-            command.extend(["--password-file", self.repo.password_file])
-        for tag in self.tags:
-            command.extend(["--tag", tag])
-        exclusions = process_filters(self.exclude)
-        self.excludeobj = exclusions
-        exclusions.add_results()
-        command.extend(exclusions.as_args())
-        return command
 
-    def cleanup(self):
-        if not self.conf:
-            return
-        self._cleanup(
-            keep_daily=self.conf.get("keep-daily"), prune=self.conf.get("prune-after")
-        )
 
-    def _cleanup(self, keep_daily: Optional[int], prune: bool):
-        command = ["restic"]
-        if keep_daily:
-            subprocess.check_call(f"restic forget --keep-daily {keep_daily}".split())
-        if prune:
-            subprocess.check_call(f"restic prune".split())
+def get_args(job, executable="restic"):
+    command = [executable, "backup"]
+    command.extend(["--repo", job.repo.path])
+    if job.repo.password_file:
+        command.extend(["--password-file", job.repo.password_file])
+    for tag in job.tags:
+        command.extend(["--tag", tag])
+    command.extend(job.exclude.as_args())
+    return command
 
-    def exclude_paths(self, paths: set):
-        for path in paths.copy():
-            for item in self.excludeobj.exclude:
-                if path.startswith(item):
-                    paths.remove(path)
-            for item in self.excludeobj.iexclude:
-                if path.lower().startswith(item.lower()):
-                    paths.remove(path)
+
+def cleanup(keep_daily: Optional[int], prune: bool, dry_run=False):
+    command = ["restic"]
+    executor = print if dry_run else lambda x: subprocess.check_call(x.split())
+    if keep_daily:
+        executor(f"restic forget --keep-daily {keep_daily}")
+    if prune:
+        executor(f"restic prune")

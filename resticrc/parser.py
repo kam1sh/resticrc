@@ -73,7 +73,7 @@ class Parser:
         repo_name = conf["repo"]
         conf["repo"] = self.repos[repo_name]
         runner = get_runner(conf)
-        return Job(tag=conf.get("tag", name), runner=runner, **conf)
+        return Job(tags=[conf.get("tag", name)], runner=runner, **conf)
 
     def parse_paths(self, conf) -> dict:
         """ Parses paths section of job, returns config. """
@@ -101,6 +101,14 @@ class Parser:
             if isinstance(val, list):
                 val = jobexclude.get(key, []) + val
             jobexclude.setdefault(key, val)
+
+    def cleanup(self, dry_run=False):
+        from .runner import cleanup
+
+        cleanup(
+            keep_daily=self.conf.get("keep-daily"), prune=self.conf.get("prune-after"),
+            dry_run=dry_run
+        )
 
 
 def get_runner(conf: dict):

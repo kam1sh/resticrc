@@ -37,6 +37,7 @@ def cli(ctx, verbose, config):
 def run(parser, jobname, dry_run):
     job = parser.jobs[jobname]
     job.run(dry_run=dry_run, conf=parser.conf)
+    parser.cleanup()
 
 
 @cli.command()
@@ -44,5 +45,5 @@ def run(parser, jobname, dry_run):
 def all(parser):
     """Execute all jobs"""
     for job in parser.jobs.values():
-        job.run(conf=parser.conf, cleanup=False)
+        job.run(conf=parser.conf)
     parser.cleanup()

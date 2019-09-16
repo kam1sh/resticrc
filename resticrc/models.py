@@ -6,6 +6,9 @@ from typing import List, Optional, Union
 
 from attr import attrs, attrib
 
+from .filtering.api import process_filters, ExclusionSettings
+from .runner import get_args, backup_files
+
 
 log = logging.getLogger(__name__)
 
@@ -14,21 +17,8 @@ log = logging.getLogger(__name__)
 class FileRunner:
     paths: List[str] = attrib()
 
-    def __call__(self, restic, dry_run=False):
-        args = restic.get_args()
-        # expand globs before passing them to restic
-        paths = [glob.glob(x) for x in self.paths]
-        paths = set(itertools.chain(*paths))
-        log.debug("Paths before exclude %s", paths)
-        # if restic.job.exclude
-        restic.exclude_paths(paths)
-        log.debug("After exclude: %s", paths)
-        args.extend(paths)
-        if dry_run:
-            print(" ".join(args))
-            return
-        subprocess.check_call(args)
-
+    def __call__(self, job, args, dry_run=False):
+        backup_files(self.paths, job, args, dry_run)
 
 @attrs
 class PipedRunner:
@@ -41,8 +31,7 @@ class PipedRunner:
             out.extend(["--stdin-filename", self.filename])
         return out
 
-    def __call__(self, restic, dry_run=False):
-        args = restic.get_args()
+    def __call__(self, job, args, dry_run=False):
         args = args[:2] + self.get_options() + args[2:]
         if dry_run:
             print(" ".join(args))
@@ -63,18 +52,16 @@ class Repository:
 @attrs
 class Job:
     repo: Repository = attrib()
-    tag: Optional[str] = attrib()
-    exclude: Optional[dict] = attrib(factory=dict)
+    tags: Optional[list] = attrib()
+    _exclude: Optional[dict] = attrib(factory=dict)
     runner = attrib(default=None)
 
-    def get_restic(self, conf=None):
-        from .runner import Restic
+    @property
+    def exclude(self) -> ExclusionSettings:
+        settings = process_filters(self._exclude)
+        settings.add_results()
+        return settings
 
-        return Restic.fromjob(job=self, conf=conf)
-
-    def run(self, dry_run=False, conf=None, cleanup=True):
-        restic = self.get_restic(conf=conf)
-        self.runner(restic, dry_run=dry_run)
-        if cleanup:
-            restic.cleanup()
-        return restic
+    def run(self, dry_run=False, conf=None):
+        command = get_args(self)
+        self.runner(self, args=command, dry_run=dry_run)

@@ -2,14 +2,13 @@ import glob
 import subprocess
 
 from resticrc.models import Job, Repository, FileRunner, PipedRunner
-from resticrc.runner import Restic
 
 
 def test_simple_job(mocker):
     mocker.patch.object(subprocess, "check_call")
     job = Job(
         repo=Repository("host", path="/backups/host"),
-        tag="home",
+        tags=["home"],
         runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
@@ -25,6 +24,19 @@ def test_simple_job(mocker):
     assert command.endswith("/home")
 
 
+def test_glob_empty(mocker):
+    mocker.patch.object(subprocess, "check_call")
+    mocker.patch.object(glob, "glob", return_value=[])
+    job = Job(
+        repo=Repository("test", "/backups/test"),
+        tags=["test2"],
+        runner=FileRunner(paths=["/home/user/data"]),
+    )
+    job.run()
+    args = subprocess.check_call.call_args[0][0]
+    assert len(args) == 7
+
+
 def test_runner_glob_exclude(mocker):
     mocker.patch.object(subprocess, "check_call")
     mocker.patch.object(
@@ -32,7 +44,7 @@ def test_runner_glob_exclude(mocker):
     )
     job = Job(
         repo=Repository("test", "/backups/test"),
-        tag="testtag",
+        tags=["testtag"],
         runner=FileRunner(paths=["/home/*/.config"]),
         exclude={"paths": ["/home/user2/.config"]},
     )
@@ -50,7 +62,7 @@ def test_job_cmd(mocker):
     mocker.patch.object(subprocess, "check_call")
     job = Job(
         repo=Repository("host", path="/backups/host"),
-        tag="postgres",
+        tags=["postgres"],
         runner=PipedRunner(target="pg_dumpall", filename="pgdump.bin"),
     )
     job.run()
@@ -67,7 +79,7 @@ def test_dry_run(mocker, capsys):
     mocker.patch.object(subprocess, "check_call")
     job = Job(
         repo=Repository("host", path="/backups/host"),
-        tag="home",
+        tags=["home"],
         runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
