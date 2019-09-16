@@ -37,7 +37,7 @@ def cli(ctx, verbose, config):
 def run(parser, jobname, dry_run):
     job = parser.jobs[jobname]
     job.run(dry_run=dry_run, conf=parser.conf)
-    parser.cleanup()
+    parser.cleanup(dry_run=dry_run)
 
 
 @cli.command()
