@@ -1,5 +1,3 @@
-import glob
-import itertools
 import logging
 import subprocess
 from typing import List, Optional, Union
@@ -19,6 +17,7 @@ class FileRunner:
 
     def __call__(self, job, args, dry_run=False):
         backup_files(self.paths, job, args, dry_run)
+
 
 @attrs
 class PipedRunner:
@@ -47,6 +46,21 @@ class Repository:
     name: str = attrib()
     path: str = attrib()
     password_file: str = attrib(default=None)
+
+    def get_args(self):
+        args = ["--repo", self.path]
+        if self.password_file:
+            args.extend(["--password-file", self.password_file])
+        return args
+
+    def cleanup(self, keep_daily=None, prune=None, dry_run=False):
+        args = ["restic"] + self.get_args()
+        command = " ".join(args)
+        executor = print if dry_run else lambda x: subprocess.check_call(x.split())
+        if keep_daily:
+            executor(f"{command} forget --keep-daily {keep_daily}")
+        if prune:
+            executor(f"{command} prune")
 
 
 @attrs

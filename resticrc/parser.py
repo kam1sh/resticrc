@@ -103,12 +103,12 @@ class Parser:
             jobexclude.setdefault(key, val)
 
     def cleanup(self, dry_run=False):
-        from .runner import cleanup
-
-        cleanup(
-            keep_daily=self.conf.get("keep-daily"), prune=self.conf.get("prune-after"),
-            dry_run=dry_run
-        )
+        for repo in self.repos.values():
+            repo.cleanup(
+                keep_daily=self.conf.get("keep-daily"),
+                prune=self.conf.get("prune-after"),
+                dry_run=dry_run,
+            )
 
 
 def get_runner(conf: dict):

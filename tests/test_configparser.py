@@ -92,4 +92,3 @@ def test_exclude():
     assert result["paths"] == [conf]
     result = parser.parse_exclude([conf])
     assert result["paths"] == [conf]
-

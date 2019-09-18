@@ -35,6 +35,7 @@ def backup_files(paths: list, job, args, dry_run=False):
     else:
         subprocess.check_call(args)
 
+
 def _exclude_paths(job, paths: set):
     for path in paths.copy():
         for item in job.exclude.exclude:
@@ -45,22 +46,10 @@ def _exclude_paths(job, paths: set):
                 paths.remove(path)
 
 
-
 def get_args(job, executable="restic"):
     command = [executable, "backup"]
-    command.extend(["--repo", job.repo.path])
-    if job.repo.password_file:
-        command.extend(["--password-file", job.repo.password_file])
+    command += job.repo.get_args()
     for tag in job.tags:
         command.extend(["--tag", tag])
     command.extend(job.exclude.as_args())
     return command
-
-
-def cleanup(keep_daily: Optional[int], prune: bool, dry_run=False):
-    command = ["restic"]
-    executor = print if dry_run else lambda x: subprocess.check_call(x.split())
-    if keep_daily:
-        executor(f"restic forget --keep-daily {keep_daily}")
-    if prune:
-        executor(f"restic prune")
