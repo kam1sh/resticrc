@@ -38,3 +38,12 @@ MANIFEST.in
 .venv
 /releases/*
 pip-wheel-metadata
+
+# zipapp build artifacts
+app
+app.pyz
+
+# debian build artifacts
+resticrc_201*
+*.deb
+
