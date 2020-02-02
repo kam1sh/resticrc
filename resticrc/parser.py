@@ -8,7 +8,8 @@ except ImportError:
     from yaml import Loader
 import yaml
 
-from .models import Repository, Job, FileRunner, PipedRunner
+from .models import Repository, Job
+from .runner import Runner
 
 
 log = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class Parser:
                 conf.setdefault(k, v)
         repo_name = conf["repo"]
         conf["repo"] = self.repos[repo_name]
-        runner = get_runner(conf)
+        runner = Runner.from_dict(conf)
         return Job(tags=[conf.get("tag", name)], runner=runner, **conf)
 
     def parse_paths(self, conf) -> dict:
@@ -109,19 +110,6 @@ class Parser:
                 prune=self.conf.get("prune-after"),
                 dry_run=dry_run,
             )
-
-
-def get_runner(conf: dict):
-    paths = conf.pop("paths", None) or conf.pop("path", None)
-    log.debug("Path: %s", paths)
-    if isinstance(paths, str):
-        paths = [paths]
-    paths = None if paths == [] else paths
-    run_cmd = conf.pop("cmd", None)
-    if run_cmd:
-        return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
-    return FileRunner(paths)
-
 
 def getlist(value) -> list:
     if isinstance(value, str):

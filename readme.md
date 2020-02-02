@@ -51,14 +51,15 @@ No?
 
 Then look at the Python syntax!
 ```python
-from resticrc.models import Repository, Job, FileRunner
+from resticrc.models import Repository, Job
+from resticrc.runner import FileRunner
 
 repo = Repository(name="host", path="/backups/host")
 
 job = Job(
     repo=repo,
-    tag="gitea",
     runner=FileRunner(paths=["/home/git", "/var/lib/gitea"]),
+    tags=["gitea"],
     exclude={"logs": True}
 )
 job.run()
