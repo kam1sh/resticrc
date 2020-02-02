@@ -72,9 +72,12 @@ class Parser:
             else:
                 conf.setdefault(k, v)
         repo_name = conf["repo"]
-        conf["repo"] = self.repos[repo_name]
-        runner = Runner.from_dict(conf)
-        return Job(tags=[conf.get("tag", name)], runner=runner, **conf)
+        repo = self.repos[repo_name]
+        try:
+            runner = Runner.from_dict(conf)
+        except Exception as e:
+            raise ValueError(f"[job {name!r}] {e}")
+        return Job(repo=repo, tags=[conf.get("tag", name)], runner=runner, conf=conf)
 
     def parse_paths(self, conf) -> dict:
         """ Parses paths section of job, returns config. """

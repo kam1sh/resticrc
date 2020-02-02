@@ -3,7 +3,7 @@ from subprocess import check_call
 from attr import attrib, attrs
 
 @attrs
-class Executor:
+class ConsoleExecutor:
     """ Command executor with debugging support. """
     dry_run: bool = attrib(default=False)
 
@@ -13,4 +13,4 @@ class Executor:
         else:
             check_call(command, cwd=cwd)
 
-executor = Executor()
+executor = ConsoleExecutor()

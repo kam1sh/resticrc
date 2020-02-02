@@ -24,6 +24,9 @@ class Runner(ABC):
             return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
         zfs_dataset = conf.pop("zfs-dataset", None)
         if zfs_dataset:
+            mountpoint = conf.pop("zfs-mountpoint", None)
+            if mountpoint is None:
+                raise ValueError("No snapshot mountpoint provided.")
             return ZFSSnapshotRunner(dataset=zfs_dataset, paths=paths or ["."])
         if not paths:
             raise ValueError("No paths provided.")
@@ -52,17 +55,18 @@ class FileRunner(Runner):
 @attrs
 class ZFSSnapshotRunner(Runner):
     dataset: str = attrib()
+    mountpoint: str = attrib(default="/mnt")
     paths: List[str] = attrib(default=["."])
 
     def __call__(self, job):
         snapshot_name = f"{self.dataset}@restic"
-        executor.run(["/usr/bin/sudo", "/usr/sbin/zfs", "snapshot", snapshot_name])
-        executor.run(["/usr/bin/sudo", "/usr/bin/mount", "-t", "zfs", snapshot_name, "/mnt"])
+        executor.run(["/usr/sbin/zfs", "snapshot", snapshot_name])
+        executor.run(["/usr/bin/mount", "-t", "zfs", snapshot_name, self.mountpoint])
         try:
-            backup_files(self.paths, job, self.get_args(job), cwd="/mnt")
+            backup_files(self.paths, job, self.get_args(job), cwd=self.mountpoint)
         finally:
-            executor.run(["/usr/bin/sudo", "/usr/bin/umount", "/mnt"])
-            executor.run(["/usr/bin/sudo", "/usr/sbin/zfs", "destroy", snapshot_name])
+            executor.run(["/usr/bin/umount", self.mountpoint])
+            executor.run(["/usr/sbin/zfs", "destroy", snapshot_name])
 
 
 @attrs

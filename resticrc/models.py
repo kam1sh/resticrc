@@ -36,6 +36,7 @@ class Job:
     tags: Optional[List[str]] = attrib()
     runner: Runner = attrib()
     _exclude: dict = attrib(factory=dict)
+    conf: dict = attrib(factory=dict)
 
     @property
     def exclude(self) -> ExclusionSettings:
