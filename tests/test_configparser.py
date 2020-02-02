@@ -1,4 +1,5 @@
-from resticrc.models import Repository, Job, FileRunner, PipedRunner
+from resticrc.models import Repository, Job
+from resticrc.runner import FileRunner, PipedRunner
 from resticrc.parser import Parser
 
 

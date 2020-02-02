@@ -6,25 +6,28 @@ from typing import List, Optional
 
 from attr import attrs, attrib
 
+from .executor import executor
 
 log = logging.getLogger(__name__)
 
-def get_runner(conf: dict):
-    paths = conf.pop("paths", None) or conf.pop("path", None)
-    log.debug("Path: %s", paths)
-    if isinstance(paths, str):
-        paths = [paths]
-    paths = None if paths == [] else paths
-    run_cmd = conf.pop("cmd", None)
-    if run_cmd:
-        return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
-    return FileRunner(paths)
 
 class Runner(ABC):
 
     @staticmethod
     def from_dict(conf: dict) -> 'Runner':
-        return get_runner(conf)
+        paths = conf.pop("paths", None) or conf.pop("path", None)
+        log.debug("Path: %s", paths)
+        if isinstance(paths, str):
+            paths = [paths]
+        run_cmd = conf.pop("cmd", None)
+        if run_cmd:
+            return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
+        zfs_dataset = conf.pop("zfs-dataset", None)
+        if zfs_dataset:
+            return ZFSSnapshotRunner(dataset=zfs_dataset, paths=paths or ["."])
+        if not paths:
+            raise ValueError("No paths provided.")
+        return FileRunner(paths)
 
     @staticmethod
     def get_args(job, executable="restic"):
@@ -36,15 +39,30 @@ class Runner(ABC):
         return command
 
     @abstractmethod
-    def __call__(self, job, dry_run=False):
+    def __call__(self, job):
         """ Perform backup. """
 
 @attrs
 class FileRunner(Runner):
     paths: List[str] = attrib()
 
-    def __call__(self, job, dry_run=False):
-        backup_files(self.paths, job, self.get_args(job), dry_run)
+    def __call__(self, job):
+        backup_files(self.paths, job, self.get_args(job))
+
+@attrs
+class ZFSSnapshotRunner(Runner):
+    dataset: str = attrib()
+    paths: List[str] = attrib(default=["."])
+
+    def __call__(self, job):
+        snapshot_name = f"{self.dataset}@restic"
+        executor.run(["/usr/bin/sudo", "/usr/sbin/zfs", "snapshot", snapshot_name])
+        executor.run(["/usr/bin/sudo", "/usr/bin/mount", "-t", "zfs", snapshot_name, "/mnt"])
+        try:
+            backup_files(self.paths, job, self.get_args(job), cwd="/mnt")
+        finally:
+            executor.run(["/usr/bin/sudo", "/usr/bin/umount", "/mnt"])
+            executor.run(["/usr/bin/sudo", "/usr/sbin/zfs", "destroy", snapshot_name])
 
 
 @attrs
@@ -58,10 +76,10 @@ class PipedRunner(Runner):
             out.extend(["--stdin-filename", self.filename])
         return out
 
-    def __call__(self, job, dry_run=False):
+    def __call__(self, job):
         args = self.get_args(job)
         args = args[:2] + self.get_options() + args[2:]
-        if dry_run:
+        if executor.dry_run:
             print(" ".join(args))
             return
         restic_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
@@ -70,10 +88,8 @@ class PipedRunner(Runner):
         restic_proc.wait(timeout=5)
 
 
-def backup_files(paths: list, job, args, dry_run=False):
+def backup_files(paths: list, job, args, cwd=None):
     # expand globs before passing them to restic
-    if not paths:
-        raise ValueError("No paths provided.")
     raw_paths = paths
     paths = []
     for item in raw_paths:
@@ -91,10 +107,7 @@ def backup_files(paths: list, job, args, dry_run=False):
     if not paths:
         raise ValueError("No paths left after exclude.")
     args.extend(paths)
-    if dry_run:
-        print(" ".join(args))
-    else:
-        subprocess.check_call(args)
+    executor.run(args, cwd=cwd)
 
 
 def _exclude_paths(job, paths: set):

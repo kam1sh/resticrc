@@ -1,7 +1,8 @@
 import glob
 import subprocess
 
-from resticrc.models import Job, Repository, FileRunner, PipedRunner
+from resticrc.models import Job, Repository
+from resticrc.runner import FileRunner, PipedRunner
 
 
 def test_simple_job(mocker):

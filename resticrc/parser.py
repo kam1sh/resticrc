@@ -108,7 +108,6 @@ class Parser:
             repo.cleanup(
                 keep_daily=self.conf.get("keep-daily"),
                 prune=self.conf.get("prune-after"),
-                dry_run=dry_run,
             )
 
 def getlist(value) -> list:

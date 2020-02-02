@@ -5,6 +5,7 @@ import click
 
 from . import __version__
 from .parser import Parser
+from .executor import executor
 
 levels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
@@ -35,12 +36,12 @@ def cli(ctx, verbose, config):
 @click.argument("jobname")
 @pass_parser
 def run(parser, jobname, dry_run):
+    executor.dry_run = dry_run
     job = parser.jobs[jobname]
-    job.run(dry_run=dry_run, conf=parser.conf)
+    job.run(conf=parser.conf)
     job.repo.cleanup(
         keep_daily=parser.conf.get("keep-daily"),
         prune=parser.conf.get("prune-after"),
-        dry_run=dry_run,
     )
 
 
