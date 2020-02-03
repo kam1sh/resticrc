@@ -11,7 +11,6 @@ import yaml
 from .models import Repository, Job
 from .runner import Runner
 
-
 log = logging.getLogger(__name__)
 
 
@@ -68,6 +67,7 @@ class Parser:
         conf = self.parse_paths(conf)
         for k, v in self.global_settings.items():
             if k == "exclude":
+                log.debug("Raw exclude: %s", v)
                 conf[k] = self.parse_exclude(conf.get("exclude", {}))
             else:
                 conf.setdefault(k, v)
@@ -77,7 +77,13 @@ class Parser:
             runner = Runner.from_dict(conf)
         except Exception as e:
             raise ValueError(f"[job {name!r}] {e}")
-        return Job(repo=repo, tags=[conf.get("tag", name)], runner=runner, conf=conf)
+        return Job(
+            repo=repo,
+            tags=[conf.get("tag", name)],
+            runner=runner,
+            conf=conf,
+            exclude=conf.pop("exclude", None),
+        )
 
     def parse_paths(self, conf) -> dict:
         """ Parses paths section of job, returns config. """
@@ -97,6 +103,7 @@ class Parser:
         elif isinstance(exclude, list):
             exclude = {"paths": exclude}
         self.merge_exclusions(exclude)
+        log.debug("Exclude after merge: %s", exclude)
         return exclude
 
     def merge_exclusions(self, jobexclude: dict):
@@ -112,6 +119,7 @@ class Parser:
                 keep_daily=self.conf.get("keep-daily"),
                 prune=self.conf.get("prune-after"),
             )
+
 
 def getlist(value) -> list:
     if isinstance(value, str):

@@ -38,10 +38,9 @@ def cli(ctx, verbose, config):
 def run(parser, jobname, dry_run):
     executor.dry_run = dry_run
     job = parser.jobs[jobname]
-    job.run(conf=parser.conf)
+    job.run()
     job.repo.cleanup(
-        keep_daily=parser.conf.get("keep-daily"),
-        prune=parser.conf.get("prune-after"),
+        keep_daily=parser.conf.get("keep-daily"), prune=parser.conf.get("prune-after")
     )
 
 
@@ -50,5 +49,5 @@ def run(parser, jobname, dry_run):
 def all(parser):
     """Execute all jobs"""
     for job in parser.jobs.values():
-        job.run(conf=parser.conf)
+        job.run()
     parser.cleanup()

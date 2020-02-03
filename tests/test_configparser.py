@@ -72,14 +72,20 @@ def test_parser_full():
     repo = Repository(name="host", path="/backups/host")
     exclude = {"caches": True, "paths": [".bash_history"]}
     assert parser.jobs
+    assert parser.jobs["gitlab"].exclude
     assert parser.jobs["gitlab"] == Job(
         tags=["gitlab"],
         repo=repo,
         runner=FileRunner(["/var/lib/gitlab", "/home/git"]),
         exclude=exclude,
+        conf={"repo": "host"},
     )
     assert parser.jobs["etc"] == Job(
-        tags=["etc"], repo=repo, runner=FileRunner(["/etc"]), exclude=exclude
+        tags=["etc"],
+        repo=repo,
+        runner=FileRunner(["/etc"]),
+        exclude=exclude,
+        conf={"repo": "host"},
     )
     assert parser.jobs["postgresql"].runner == PipedRunner(target="pg_dumpall")
     assert parser.jobs["home"].exclude == dict(**exclude, logs=True)

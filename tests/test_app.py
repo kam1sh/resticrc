@@ -3,20 +3,20 @@ import subprocess
 
 from resticrc.models import Job, Repository
 from resticrc.runner import FileRunner, PipedRunner
+from resticrc.executor import executor
 
 
-def test_simple_job(mocker):
-    mocker.patch.object(subprocess, "check_call")
+def test_simple_job(helpers):
+    helpers.glob.return_value = ["/home"]
     job = Job(
         repo=Repository("host", path="/backups/host"),
         tags=["home"],
         runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
-    mocker.patch.object(glob, "glob")
-    glob.glob.return_value = ["/home"]
     job.run()
-    cmd_args = subprocess.check_call.call_args[0][0]
+    assert helpers.exec.called
+    cmd_args = helpers.exec.call_args[0][0]
     command = " ".join(cmd_args)
     assert len(cmd_args) == 11
     assert "restic backup --repo /backups/host --tag home" in command
@@ -25,24 +25,21 @@ def test_simple_job(mocker):
     assert command.endswith("/home")
 
 
-def test_glob_empty(mocker):
-    mocker.patch.object(subprocess, "check_call")
-    mocker.patch.object(glob, "glob", return_value=[])
+def test_glob_empty(helpers):
+    helpers.glob.return_value = []
     job = Job(
         repo=Repository("test", "/backups/test"),
         tags=["test2"],
         runner=FileRunner(paths=["/home/user/data"]),
     )
     job.run()
-    args = subprocess.check_call.call_args[0][0]
+    assert helpers.exec.called
+    args = helpers.exec.call_args[0][0]
     assert len(args) == 7
 
 
-def test_runner_glob_exclude(mocker):
-    mocker.patch.object(subprocess, "check_call")
-    mocker.patch.object(
-        glob, "glob", return_value=["/home/user1/.config", "/home/user2/.config"]
-    )
+def test_runner_glob_exclude(helpers):
+    helpers.glob.return_value = ["/home/user1/.config", "/home/user2/.config"]
     job = Job(
         repo=Repository("test", "/backups/test"),
         tags=["testtag"],
@@ -51,23 +48,21 @@ def test_runner_glob_exclude(mocker):
     )
     run = job.run()
     glob.glob.assert_called_with("/home/*/.config")
-    args = subprocess.check_call.call_args[0][0]
+    args = helpers.exec.call_args[0][0]
     assert len(args) == 9
     command = " ".join(args)
     assert "--exclude /home/user2/.config" in command
     assert command.endswith("/home/user1/.config")
 
 
-def test_job_cmd(mocker):
-    mocker.patch.object(subprocess, "Popen")
-    mocker.patch.object(subprocess, "check_call")
+def test_job_cmd(helpers):
     job = Job(
         repo=Repository("host", path="/backups/host"),
         tags=["postgres"],
         runner=PipedRunner(target="pg_dumpall", filename="pgdump.bin"),
     )
     job.run()
-    subprocess.Popen.assert_called_with(
+    helpers.sp_popen.assert_called_with(
         (
             "restic backup --stdin --stdin-filename pgdump.bin --repo /backups/host --tag postgres"
         ).split(),
@@ -84,6 +79,7 @@ def test_dry_run(mocker, capsys):
         runner=FileRunner(paths=["/home"]),
         exclude={"logs": True, "paths": ["/home/user/share"]},
     )
-    job.run(dry_run=True)
+    executor.dry_run = True
+    job.run()
     assert not subprocess.check_call.called
     assert capsys.readouterr()

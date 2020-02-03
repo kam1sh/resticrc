@@ -40,7 +40,10 @@ class Job:
 
     @property
     def exclude(self) -> ExclusionSettings:
-        return process_filters(self._exclude)
+        log.debug("Exclude before processing filters: %s", self._exclude)
+        val = process_filters(self._exclude)
+        log.debug("Exclude after processing filters: %s", val)
+        return val
 
-    def run(self, conf=None):
+    def run(self):
         self.runner(self)

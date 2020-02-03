@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import glob
 import logging
 import subprocess
-from typing import List, Optional
+from typing import List
 
 from attr import attrs, attrib
 
@@ -12,13 +12,12 @@ log = logging.getLogger(__name__)
 
 
 class Runner(ABC):
-
     @staticmethod
-    def from_dict(conf: dict) -> 'Runner':
+    def from_dict(conf: dict) -> "Runner":
         paths = conf.pop("paths", None) or conf.pop("path", None)
-        log.debug("Path: %s", paths)
         if isinstance(paths, str):
             paths = [paths]
+        log.debug("Paths: %s", paths)
         run_cmd = conf.pop("cmd", None)
         if run_cmd:
             return PipedRunner(target=run_cmd, filename=conf.pop("save-as", None))
@@ -45,12 +44,14 @@ class Runner(ABC):
     def __call__(self, job):
         """ Perform backup. """
 
+
 @attrs
 class FileRunner(Runner):
     paths: List[str] = attrib()
 
     def __call__(self, job):
         backup_files(self.paths, job, self.get_args(job))
+
 
 @attrs
 class ZFSSnapshotRunner(Runner):
