@@ -11,7 +11,7 @@ class ConsoleExecutor:
 
     def run(self, command, cwd=None):
         if self.dry_run:
-            print("Executing: ", command)
+            print("Executing:", command)
         else:
             check_call(command, cwd=cwd)
 

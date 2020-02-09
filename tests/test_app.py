@@ -19,7 +19,9 @@ def test_simple_job(helpers):
     cmd_args = helpers.exec.call_args[0][0]
     command = " ".join(cmd_args)
     assert len(cmd_args) == 11
-    assert "restic backup --repo /backups/host --tag home" in command
+    assert command.startswith("restic")
+    assert "--repo /backups/host" in command
+    assert "--tag home" in command
     assert "--exclude *.log" in command
     assert "--exclude /home/user/share" in command
     assert command.endswith("/home")
@@ -63,9 +65,9 @@ def test_job_cmd(helpers):
     )
     job.run()
     helpers.sp_popen.assert_called_with(
-        (
-            "restic backup --stdin --stdin-filename pgdump.bin --repo /backups/host --tag postgres"
-        ).split(),
+        [
+            'restic', '--repo', '/backups/host', 'backup', '--tag', 'postgres', '--stdin', '--stdin-filename', 'pgdump.bin'
+        ],
         stdin=subprocess.PIPE,
     )
 

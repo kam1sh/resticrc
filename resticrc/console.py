@@ -49,5 +49,6 @@ def run(parser, jobname, dry_run):
 def all(parser):
     """Execute all jobs"""
     for job in parser.jobs.values():
+        logging.info("Executing job %s", job)
         job.run()
     parser.cleanup()

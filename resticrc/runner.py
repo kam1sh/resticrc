@@ -7,6 +7,7 @@ from typing import List, TYPE_CHECKING
 from attr import attrs, attrib
 
 from .executor import executor
+from .commands import Restic
 
 if TYPE_CHECKING:
     from .models import Job
@@ -57,7 +58,11 @@ class FileRunner(Runner):
     paths: List[str] = attrib()
 
     def __call__(self, job: "Job"):
-        backup_files(self.paths, job, self.get_args(job))
+        restic = Restic(job, self)
+        if job.conf.get("zstd") is True:
+            restic.backup_zstd(self.paths)
+        else:
+            restic.backup_files(self.paths)
 
 
 @attrs
@@ -71,7 +76,9 @@ class ZFSSnapshotRunner(Runner):
         executor.run(["/usr/sbin/zfs", "snapshot", snapshot_name])
         executor.run(["/usr/bin/mount", "-t", "zfs", snapshot_name, self.mountpoint])
         try:
-            backup_files(self.paths, job, self.get_args(job), cwd=self.mountpoint)
+            restic = Restic(job, self)
+            if job.conf.get("zstd") is True:
+                restic.backup_zstd(self.paths, cwd=self.mountpoint)
         finally:
             executor.run(["/usr/bin/umount", self.mountpoint])
             executor.run(["/usr/sbin/zfs", "destroy", snapshot_name])
@@ -89,52 +96,10 @@ class PipedRunner(Runner):
         return out
 
     def __call__(self, job: "Job"):
-        args = self.get_args(job)
-        args = args[:2] + self.get_options() + args[2:]
+        restic = Restic(job, self)
+        restic_proc = restic.backup_stdin(filename=self.filename)
         if executor.dry_run:
-            print(" ".join(args))
             return
-        restic_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
         subprocess.check_call(self.target.split(), stdout=restic_proc.stdin)
         restic_proc.stdin.close()
         restic_proc.wait()
-
-
-def backup_files(paths: list, job, args, cwd=None):
-    paths = process_paths(paths, job)
-    args.extend(paths)
-    executor.run(args, cwd=cwd)
-
-
-def process_paths(paths: list, job: "Job"):
-    # expand globs before passing them to restic
-    raw_paths = paths
-    paths = set(unglob(raw_paths))
-    if not paths:
-        raise ValueError("No paths left after glob expanding.")
-    log.debug("Paths before exclude %s", paths)
-    _exclude_paths(job, paths)
-    log.debug("After exclude: %s", paths)
-    if not paths:
-        raise ValueError("No paths left after exclude.")
-    return paths
-
-
-def unglob(paths: list):
-    for path in paths:
-        result = glob.glob(path)
-        if not result:
-            log.warning("Failed to unglob %s - possible permission denied?", path)
-            result = [path]
-        yield from result
-
-
-def _exclude_paths(job, paths: set):
-    settings = job.exclude
-    for path in paths.copy():
-        for item in settings.exclude:
-            if path.startswith(item):
-                paths.remove(path)
-        for item in settings.iexclude:
-            if path.lower().startswith(item.lower()):
-                paths.remove(path)

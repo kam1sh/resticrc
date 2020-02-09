@@ -46,6 +46,6 @@ def test_as_args():
     args = " ".join(args)
     assert "--exclude .m2" in args
     assert "--exclude .cache" in args
-    assert "--exclude .config/*/Cache"
-    assert "--exclude .config/*/GPUCache"
-    assert "--exclude .config/*/CachedData"
+    assert "--exclude .config/*/Cache" in args
+    assert "--exclude .config/*/GPUCache" in args
+    assert "--exclude .config/*/CachedData" in args
