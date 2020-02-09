@@ -38,11 +38,17 @@ class Job:
     _exclude: dict = attrib(factory=dict)
     conf: dict = attrib(factory=dict)
 
+    def __attrs_post_init__(self):
+        self._exclude_processed = None
+
     @property
     def exclude(self) -> ExclusionSettings:
+        if self._exclude_processed:
+            return self._exclude_processed
         log.debug("Exclude before processing filters: %s", self._exclude)
         val = process_filters(self._exclude)
         log.debug("Exclude after processing filters: %s", val)
+        self._exclude_processed = val
         return val
 
     def run(self):

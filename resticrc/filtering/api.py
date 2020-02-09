@@ -22,9 +22,9 @@ def _parse_path(path: str):
 class ExclusionSettings(dict):
     def __init__(self, items):
         super().__init__(items)
-        self.pluginmap: ty.Dict[str, ty.Union[ty.Tuple[str]], Holder] = {}
-        self.exclude = set()
-        self.iexclude = set()
+        self.pluginmap: ty.Dict[str, ty.Union[ty.Tuple[str], Holder]] = {}
+        self.exclude: ty.Set[str] = set()
+        self.iexclude: ty.Set[str] = set()
 
     def map(self, name, *paths):
         val = self.get(name)
@@ -46,8 +46,8 @@ class ExclusionSettings(dict):
                 self.exclude.add(item)
 
     def get_result(self) -> ty.Iterator[ty.Union[str, "IgnoreCase"]]:
-        result = []
-        keep: ty.List[str] = []
+        result: ty.List = []
+        keep: ty.List = []
         # 1. populate paths
         for key, item in self.pluginmap.items():
             if isinstance(item, Holder):
@@ -141,7 +141,7 @@ manager.add_hookspecs(PluginSpecification)
 def process_filters(config: dict) -> ExclusionSettings:
     """ Returns what paths should be excluded """
     # note: should be called after including global settings
-    config = ExclusionSettings(config)
-    manager.hook.exclude_hook(config=config)
-    config.add_results()
-    return config
+    settings = ExclusionSettings(config)
+    manager.hook.exclude_hook(config=settings)
+    settings.add_results()
+    return settings

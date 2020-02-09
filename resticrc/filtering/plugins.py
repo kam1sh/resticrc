@@ -22,7 +22,7 @@ class Caches:
             ".config/*/Code Cache",
             ".config/*/Service Worker/CacheStorage",
             ".config/*/*/Service Worker/CacheStorage",
-            ".config/*/ShaderCache"
+            ".config/*/ShaderCache",
         )
 
 
@@ -34,15 +34,16 @@ class DevCaches:
     def exclude_hook(self, config):
         dev_caches = config.get("dev-caches")
         func = config.mapdefault if dev_caches else config.map
-        func("python",
-             ".pyenv",
-             "__pycache__",
-             ".venv",
-             ".virtualenvs",
-             ".cookiecutters",
-             ".local/lib/python*/site-packages",
-             ".local/share/pipenv/lib",
-             ".local/share/virtualenvs"
+        func(
+            "python",
+            ".pyenv",
+            "__pycache__",
+            ".venv",
+            ".virtualenvs",
+            ".cookiecutters",
+            ".local/lib/python*/site-packages",
+            ".local/share/pipenv/lib",
+            ".local/share/virtualenvs",
         )
         func("npm", "node_modules", ".npm/_cacache")
         func("java", ".m2")
