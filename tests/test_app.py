@@ -66,7 +66,15 @@ def test_job_cmd(helpers):
     job.run()
     helpers.sp_popen.assert_called_with(
         [
-            'restic', '--repo', '/backups/host', 'backup', '--tag', 'postgres', '--stdin', '--stdin-filename', 'pgdump.bin'
+            "restic",
+            "--repo",
+            "/backups/host",
+            "backup",
+            "--tag",
+            "postgres",
+            "--stdin",
+            "--stdin-filename",
+            "pgdump.bin",
         ],
         stdin=subprocess.PIPE,
     )

@@ -47,3 +47,4 @@ app.pyz
 resticrc_201*
 *.deb
 
+/htmlcov

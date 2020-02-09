@@ -113,7 +113,8 @@ class Parser:
                 val = jobexclude.get(key, []) + val
             jobexclude.setdefault(key, val)
 
-    def cleanup(self, dry_run=False):
+    def cleanup_all(self):
+        """ Performs cleanup for all repositories """
         for repo in self.repos.values():
             repo.cleanup(
                 keep_daily=self.conf.get("keep-daily"),

@@ -31,24 +31,29 @@ def cli(ctx, verbose, config):
 
 @cli.command()
 @click.option(
-    "-n", "--dry-run", is_flag=True, help="Prints restic command instead of running it"
+    "-n", "--dry-run", is_flag=True, help="Prints commands instead of executing"
 )
+@click.option("--cleanup", is_flag=True, help="Perform a cleanup after a backup")
 @click.argument("jobname")
 @pass_parser
-def run(parser, jobname, dry_run):
+def run(parser, jobname, dry_run, cleanup):
     executor.dry_run = dry_run
     job = parser.jobs[jobname]
     job.run()
-    job.repo.cleanup(
-        keep_daily=parser.conf.get("keep-daily"), prune=parser.conf.get("prune-after")
-    )
+    if cleanup:
+        job.repo.cleanup(
+            keep_daily=parser.conf.get("keep-daily"),
+            prune=parser.conf.get("prune-after"),
+        )
 
 
 @cli.command()
+@click.option("--cleanup", is_flag=True, help="Perform a cleanup after a backup")
 @pass_parser
-def all(parser):
+def all(parser, cleanup):
     """Execute all jobs"""
     for job in parser.jobs.values():
         logging.info("Executing job %s", job)
         job.run()
-    parser.cleanup()
+    if cleanup:
+        parser.cleanup_all()
