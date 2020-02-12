@@ -25,7 +25,7 @@ class Repository:
     def cleanup(self, keep_daily=None, prune=None):
         args = ["restic"] + self.get_args()
         if keep_daily:
-            executor.run(args + ["forget", "--keep-daily", str(keep_daily)])
+            executor.run(args + ["forget", "--group-by", "host,tags", "--keep-daily", str(keep_daily)])
         if prune:
             executor.run(args + ["prune"])
 
