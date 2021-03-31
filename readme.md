@@ -64,3 +64,16 @@ job = Job(
 )
 job.run()
 ```
+
+# Build
+
+This tool uses [Poetry](https://python-poetry.org) for building:
+```bash
+poetry build
+ls -l dist/resticrc-0.1.0-py3-none-any.whl
+```
+Also, there is super-puper-ultra-hyper build script for [PyOxidizer](https://github.com/indygreg/PyOxidizer):
+```bash
+pyoxidizer build
+ls -l build/x86_64-unknown-linux-gnu/debug/install/
+```
