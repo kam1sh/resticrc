@@ -47,7 +47,6 @@ pipeline {
             post {
                 always {
                     script {
-                    sh 'ls -l'
                         if(fileExists('report.xml')) junit testResults: 'report.xml', skipPublishingChecks: true
                         publishHTML([reportDir: 'htmlcov', reportFiles: 'index.html', reportName: 'Coverage report'])
                     }
