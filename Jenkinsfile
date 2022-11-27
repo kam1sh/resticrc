@@ -41,7 +41,7 @@ pipeline {
                 always {
                     script {
                         publishHTML([reportDir: 'htmlcov', reportFiles: 'index.html', reportName: 'Coverage report'])
-                        if(fileExists 'report.xml') junit 'report.xml'
+                        if(fileExists('report.xml')) junit 'report.xml'
                     }
                 }
             }
