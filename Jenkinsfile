@@ -22,10 +22,12 @@ pipeline {
             }
         }
         stage('lint') {
+            // disable
+            when { expression { false } }
             steps {
                 script {
                     sh '''
-                        #python3 -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
+                        python3 -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
                         python3 -m poetry run python -m mypy resticrc > mypy.log
                     '''
                 }
@@ -33,10 +35,7 @@ pipeline {
             post {
                 always {
                     script {
-                        recordIssues(tools: [
-                            // pyLint(pattern: 'pylint.log'),
-                            myPy(pattern: 'mypy.log')
-                        ])
+                        recordIssues(tools: [pyLint(pattern: 'pylint.log'), myPy(pattern: 'mypy.log')])
                     }
                 }
             }
