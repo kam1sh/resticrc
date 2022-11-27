@@ -47,8 +47,9 @@ pipeline {
             post {
                 always {
                     script {
-                        publishHTML([reportDir: 'htmlcov', reportFiles: 'index.html', reportName: 'Coverage report'])
+                    sh 'ls -l'
                         if(fileExists('report.xml')) junit 'report.xml'
+                        publishHTML([reportDir: 'htmlcov', reportFiles: 'index.html', reportName: 'Coverage report'])
                     }
                 }
             }
