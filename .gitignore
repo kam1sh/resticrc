@@ -27,9 +27,7 @@ pip-log.txt
 
 *.log
 
-/setup.cfg
 MANIFEST.in
-/setup.py
 /docs/site/*
 /tests/fixtures/simple_project/setup.py
 /tests/fixtures/project_with_extras/setup.py
@@ -42,9 +40,5 @@ pip-wheel-metadata
 # zipapp build artifacts
 app
 app.pyz
-
-# debian build artifacts
-resticrc_201*
-*.deb
 
 /htmlcov

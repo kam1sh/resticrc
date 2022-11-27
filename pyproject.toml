@@ -6,20 +6,21 @@ authors = ["Igor Ovsyannikov <kamish@outlook.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-click = "^7.0"
-attrs = "^19.1"
-pluggy = "^0.13.0"
-PyYAML = "^5.1"
-
-[tool.poetry.dev-dependencies]
-pytest = "^5.1"
-pytest-mock = "^1.10"
-pytest-cov = "^2.7"
-black = "^19.10b0"
+python = "^3.7"
+click = "^8.1.3"
+attrs = "^22.1.0"
+pluggy = "^1.0.0"
+pyyaml = "^6.0"
 
 [tool.poetry.scripts]
 resticrc = "resticrc.console:cli"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+pytest-mock = "^3.10.0"
+pytest-cov = "^4.0.0"
+black = "^22.10.0"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"

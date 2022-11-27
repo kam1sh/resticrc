@@ -1,9 +1,0 @@
-Package: resticrc
-Version: 2019.09
-Architecture: all
-Maintainer: Igor Ovsyannikov
-Installed-Size: 1850
-Depends: python3 (>= 3.7.3-1~)
-Section: python
-Priority: optional
-Description: Restic configuration front-end.
