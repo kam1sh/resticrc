@@ -46,11 +46,11 @@ pipeline {
                 }
             }
         }
-        post {
-            clesnup {
-                script {
-                    cleanWs disableDeferredWipeout: true
-                }
+    }
+    post {
+        clesnup {
+            script {
+                cleanWs disableDeferredWipeout: true
             }
         }
     }
