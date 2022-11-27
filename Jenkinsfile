@@ -48,7 +48,7 @@ pipeline {
         }
     }
     post {
-        clesnup {
+        cleanup {
             script {
                 cleanWs disableDeferredWipeout: true
             }
