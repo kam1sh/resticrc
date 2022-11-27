@@ -20,8 +20,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        python -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
-                        python -m poetry run python -m mypy resticrc > mypy.log
+                        python3 -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
+                        python3 -m poetry run python -m mypy resticrc > mypy.log
                     '''
                 }
             }
@@ -35,7 +35,7 @@ pipeline {
         }
         stage('test') {
             steps {
-                sh 'python -m poetry run pytest -v --cov=resticrc --junit-xml=report.xml'
+                sh 'python3 -m poetry run pytest -v --cov=resticrc --junit-xml=report.xml'
             }
             post {
                 always {
