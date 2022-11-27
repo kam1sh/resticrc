@@ -2,6 +2,11 @@
 
 pipeline {
     agent any
+
+    options {
+        ansiColor('xterm')
+    }
+
     stages {
         stage('build') {
             steps {
@@ -20,7 +25,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        python3 -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
+                        #python3 -m poetry run python -m pylint --rcfile=pylintrc resticrc > pylint.log
                         python3 -m poetry run python -m mypy resticrc > mypy.log
                     '''
                 }
@@ -28,7 +33,10 @@ pipeline {
             post {
                 always {
                     script {
-                        recordIssues(tools: [pyLint(pattern: 'pylint.log'), myPy(pattern: 'mypy.log')])
+                        recordIssues(tools: [
+                            // pyLint(pattern: 'pylint.log'),
+                            myPy(pattern: 'mypy.log')
+                        ])
                     }
                 }
             }
